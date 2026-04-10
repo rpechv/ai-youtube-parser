@@ -1,0 +1,4 @@
+google-genai
+apify-client
+python-dotenv
+python-dateutil
