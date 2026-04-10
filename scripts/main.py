@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 # ================= ROOT PATH =================
 SKILL_ROOT = Path(__file__).parent.parent.resolve()
-# Global project root is three levels above the skill folder (.agents/skills/ai-youtube-scraper -> Fizen.io)
+# Global project root is three levels above the skill folder (.agents/skills/ai-youtube-scraper)
 PROJECT_ROOT = SKILL_ROOT.parent.parent.parent.resolve()
 
 # ================= LOGGING =================
