@@ -28,6 +28,7 @@ To change the queries, open `main.py` and modify the `SEARCH_QUERIES` list.
 
 ### 2. Configuration Settings (Crucial before execution)
 Adjust the following constants in `scripts/main.py` based on the user's criteria:
+- `MAX_RESULTS_PER_QUERY`: Scraping depth for each request.
 - `SEARCH_QUERIES`: Targeted YouTube search phrases.
 - `MIN_SUBS` / `MAX_SUBS` / `MAX_SUBS_HARD_LIMIT`: Subscriber target segment and maximum size to filter out.
 - `ACTIVITY_DAYS` / `HARD_DELETE_DAYS`: Expiration boundaries for when to label channels inactive or delete them entirely.
