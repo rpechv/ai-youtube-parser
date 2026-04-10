@@ -8,8 +8,8 @@ sys.path.append(str(Path(__file__).parent))
 
 from main import (
     load_dotenv, ENV_PATH, _load_cache, _save_cache, filter_activity, batch_llm_analyze, 
-    _is_cache_fresh, format_date, parse_subs, generate_report, PROJECT_ROOT, SCRIPT_DIR,
-    logger, extract_contacts_from_links, extract_contacts_regex
+    _is_cache_fresh, format_date, parse_subs, generate_report, PROJECT_ROOT, SKILL_ROOT,
+    BATCH_TOPIC, logger, extract_contacts_from_links, extract_contacts_regex
 )
 
 def run_pure_manual(file_name=None):
@@ -108,8 +108,8 @@ def run_pure_manual(file_name=None):
     _save_cache(cache)
     
     # 7. Generate markdown Report
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
-    report_filename = PROJECT_ROOT / "db" / "reports" / f"manual_report_{timestamp}.md"
+    now = datetime.now()
+    report_filename = PROJECT_ROOT / "db" / "reports" / f"manual_{BATCH_TOPIC}_{now.strftime('%d_%m_%H%M')}.md"
     generate_report(filtered, report_filename)
     
     logger.info(f"🎯 Report created successfully: {report_filename}")

@@ -11,8 +11,9 @@ from apify_client import ApifyClient
 from dotenv import load_dotenv
 
 # ================= ROOT PATH =================
-SCRIPT_DIR = Path(__file__).parent.parent.resolve()
-PROJECT_ROOT = Path.cwd()
+SKILL_ROOT = Path(__file__).parent.parent.resolve()
+# Global project root is one level above the skill folder
+PROJECT_ROOT = SKILL_ROOT.parent.resolve()
 
 # ================= LOGGING =================
 log_dir = PROJECT_ROOT / "db" / "reports"
@@ -39,13 +40,13 @@ except ImportError:
     logger.error("google-genai is not installed. Run: pip3 install google-genai")
 
 # ================= Configuration =================
-BATCH_TOPIC             = "youtube_influencer_parser"
+BATCH_TOPIC             = "cooking_recipes_test"
 SEARCH_QUERIES = [
-    "traffic arbitrage",
-    "media buying"
+    "как готовить медовик",
+    "как готовить фаршированые перцы"
 ]
 
-MAX_RESULTS_PER_QUERY   = 10
+MAX_RESULTS_PER_QUERY   = 5
 MIN_SUBS                = 3_000
 MAX_SUBS                = 70_000
 MAX_SUBS_HARD_LIMIT     = 600_000   # Auto-exclude channels larger than this to save LLM tokens
@@ -58,12 +59,13 @@ CACHE_DAYS              = 90        # LLM analysis cache lifetime
 GEMINI_MODEL_NAME       = "gemini-3.1-flash-lite-preview"
 
 TOPIC_PROMPT = (
-    "Channels about traffic arbitrage, media buying, launching ads in Google Ads / Facebook Ads / TikTok Ads, "
-    "virtual and physical cards for advertising accounts, and payment services for foreign tools."
+    "Channels about cooking, food recipes, specifically desserts (Medovik) and traditional main courses (stuffed peppers). "
+    "Focus on high-quality home cooking and professional culinary instructions."
 )
 
 # ================= ENV =================
-ENV_PATH = PROJECT_ROOT / ".env"
+# Try to load env from skill folder first, then global
+ENV_PATH = SKILL_ROOT / ".env"
 load_dotenv(ENV_PATH)
 
 APIFY_TOKENS = [t.strip() for t in os.getenv("APIFY_TOKEN", "").split(",") if t.strip()]
@@ -516,7 +518,7 @@ def main():
     
     _save_cache(cache)
     now = datetime.now()
-    report_name = PROJECT_ROOT / "db" / "reports" / f"full_report_{now.strftime('%m_%d_%H%M')}.md"
+    report_name = PROJECT_ROOT / "db" / "reports" / f"{BATCH_TOPIC}_{now.strftime('%d_%m_%H%M')}.md"
     generate_report(channels, report_name)
     logger.info(f"🎯 Done: {report_name}")
 
