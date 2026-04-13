@@ -40,10 +40,54 @@ except ImportError:
     logger.error("google-genai is not installed. Run: pip3 install google-genai")
 
 # ================= Configuration =================
-BATCH_TOPIC             = "cooking_recipes_test"
+BATCH_TOPIC             = "vietnam_travel_and_life"
 SEARCH_QUERIES = [
-    "как готовить медовик",
-    "как готовить фаршированые перцы"
+    "отдых во вьетнаме",
+    "отдых в нячанге",
+    "отдых на фукуоке",
+    "отдых в муйне",
+    "отдых в дананге",
+    "жизнь во вьетнаме",
+    "переезд во вьетнам",
+    "релокация во вьетнам",
+    "эмиграция во вьетнам",
+    "правила въезда во вьетнам",
+    "виза во вьетнам для россиян",
+    "е-виза во вьетнам",
+    "продление визы во вьетнам",
+    "визаран из вьетнама",
+    "бизнес виза во вьетнам",
+    "карта во вьетнаме",
+    "карта мир во вьетнаме",
+    "чем платить во вьетнаме",
+    "какие карты работают во вьетнаме",
+    "unionpay во вьетнаме работает или нет",
+    "как снять деньги во вьетнаме",
+    "обмен валюты во вьетнаме",
+    "qr оплата во вьетнаме",
+    "usdt во вьетнаме",
+    "как вывести крипту во вьетнаме",
+    "p2p вьетнам",
+    "цены во вьетнаме",
+    "сколько стоит жизнь во вьетнаме",
+    "аренда жилья во вьетнаме",
+    "аренда квартиры в нячанге",
+    "аренда виллы на фукуоке",
+    "зимовка во вьетнаме",
+    "русские во вьетнаме",
+    "русский нячанг",
+    "русская деревня муйне",
+    "экспаты во вьетнаме",
+    "дананг экспаты",
+    "права во вьетнаме для россиян",
+    "медицина во вьетнаме для туристов",
+    "вьетнам или тайланд",
+    "нячанг",
+    "муйне",
+    "ханой",
+    "хошимин",
+    "далат",
+    "фукуок"
 ]
 
 MAX_RESULTS_PER_QUERY   = 5
@@ -59,8 +103,9 @@ CACHE_DAYS              = 90        # LLM analysis cache lifetime
 GEMINI_MODEL_NAME       = "gemini-3.1-flash-lite-preview"
 
 TOPIC_PROMPT = (
-    "Channels about cooking, food recipes, specifically desserts (Medovik) and traditional main courses (stuffed peppers). "
-    "Focus on high-quality home cooking and professional culinary instructions."
+    "Channels about travel to Vietnam, living in Vietnam (Nha Trang, Da Nang, Mui Ne, Phu Quoc, Hanoi, Ho Chi Minh), "
+    "relocation guides, visa issues (e-visa, visa runs), and financial guides for Vietnam (bank cards, UnionPay, USDT, "
+    "exchanging money). The target audience is Russian-speaking travelers and expats."
 )
 
 # ================= ENV =================
@@ -296,7 +341,8 @@ def enrich_all_channels(channels_list, cache: dict):
                     "contacts": entry.get("contacts", {}),
                     "is_relevant": entry.get("is_relevant", False),
                     "relevance_reason": entry.get("relevance_reason", ""),
-                    "subs": entry.get("subs", c["subs"])
+                    "subs": entry.get("subs", c["subs"]),
+                    "video_views": entry.get("video_views", c.get("video_views", 0))
                 })
                 if cached_dt := format_date(entry.get("video_date")):
                     if not c["video_date"] or cached_dt > c["video_date"]:
@@ -352,7 +398,8 @@ def enrich_all_channels(channels_list, cache: dict):
                     c.update({
                         "video_date": real_date,
                         "video_title": videos[0]["title"],
-                        "video_url": videos[0]["url"]
+                        "video_url": videos[0]["url"],
+                        "video_views": videos[0]["views"]
                     })
                     
     return channels_list
@@ -420,6 +467,7 @@ def batch_llm_analyze(channels_list, cache: dict):
                             "bio": c["bio"], 
                             "subs": c["subs"], 
                             "video_date": c["video_date"].isoformat() if c["video_date"] else None, 
+                            "video_views": c.get("video_views", 0),
                             "is_relevant": c["is_relevant"], 
                             "relevance_reason": c["relevance_reason"], 
                             "contacts": c["contacts"], 
@@ -485,12 +533,13 @@ def generate_report(channels_list, filename):
         
         def _write_table(file_obj, title, rows):
             file_obj.write(f"## {title}\n")
-            file_obj.write("| Channel | Subs | Contacts | Latest Video | Date | Reason |\n")
-            file_obj.write("|---|---:|---|---|---|---|\n")
+            file_obj.write("| Channel | Subs | Contacts | Latest Video | Views | Date | Reason |\n")
+            file_obj.write("|---|---:|---|---|---:|---|---|\n")
             for ch in rows:
                 v_title = clean_txt(ch.get("video_title", "Video")[:60])
                 v_link = f"[{v_title}]({ch.get('video_url', '#')})"
-                file_obj.write(f"| [{clean_txt(ch['name'])}]({ch['url']}) | {ch['subs']:,} | {clean_txt(ch['contacts_str'])} | {v_link} | {ch['dt']} | {clean_txt(ch['relevance_reason'])} |\n")
+                views = ch.get("video_views", 0)
+                file_obj.write(f"| [{clean_txt(ch['name'])}]({ch['url']}) | {ch.get('subs', 0)} | {clean_txt(ch['contacts_str'])} | {v_link} | {views} | {ch['dt']} | {clean_txt(ch['relevance_reason'])} |\n")
             if not rows: file_obj.write("No channels found.\n")
             file_obj.write("\n")
 
@@ -498,9 +547,10 @@ def generate_report(channels_list, filename):
         _write_table(f, "List 2: Other Relevant", list2)
         
         f.write("## List 3: Inactive\n")
-        f.write("| Channel | Subs | Last Video | Contacts |\n|---|---:|---|---|\n")
+        f.write("| Channel | Subs | Last Video | Views | Contacts |\n|---|---:|---|---:|---|\n")
         for c in inactive:
-            f.write(f"| [{clean_txt(c['name'])}]({c['url']}) | {c['subs']:,} | {c['dt']} | {clean_txt(c['contacts_str'])} |\n")
+            views = c.get("video_views", 0)
+            f.write(f"| [{clean_txt(c['name'])}]({c['url']}) | {c.get('subs', 0)} | {c['dt']} | {views} | {clean_txt(c['contacts_str'])} |\n")
         if not inactive: f.write("No inactive channels.\n")
 
     logger.info(f"✅ Report created: L1({len(list1)}) L2({len(list2)}) L3({len(inactive)})")
